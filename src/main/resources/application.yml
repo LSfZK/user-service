@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: user-service
+  config:
+    import: configserver:http://localhost:9200
+  cloud:
+    config:
+      uri: http://localhost:9200
+      username: conf
+      password: f5426fe8-bcbe-40d1-bba0-11156e880516
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/lsfzk
+    username: lsfzk_manager
+    password: faw392k892
