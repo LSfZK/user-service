@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -58,8 +59,14 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
         }
 
-        String loginId = jwtUtil.getLoginIdFromToken(refreshToken);
-        String newAccessToken = jwtUtil.generateAccessToken(loginId);
+        List<String> claims = jwtUtil.getClaimsFromToken(refreshToken);
+        if (claims.size() < 3) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token claims");
+        }
+        Long userId = Long.parseLong(claims.get(0));
+        String roles = claims.get(1);
+        String nickname = claims.get(2);
+        String newAccessToken = jwtUtil.generateAccessToken(userId, roles, nickname);
 
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
     }
