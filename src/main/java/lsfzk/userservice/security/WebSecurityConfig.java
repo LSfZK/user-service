@@ -41,9 +41,14 @@ public class WebSecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         // --- Allow public access to these specific endpoints ---
-                        .requestMatchers("/users/login", "/users/register").permitAll()
-                        .requestMatchers("/actuator/**").permitAll() // IMPORTANT: Allows Eureka health checks
-                        // ----------------------------------------------------
+                        .requestMatchers(
+                                "/actuator/**",
+                                "/users/login",
+                                "/users/register",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
+                        ).permitAll()
 
                         // All other requests must be authenticated
                         .anyRequest().authenticated()
