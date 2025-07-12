@@ -4,7 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lsfzk.userservice.dto.LoginRequestDTO;
 import lsfzk.userservice.dto.SignupDTO;
 import lsfzk.userservice.dto.TokenResponseDTO;
+import lsfzk.userservice.enums.BusinessRegistrationStatus;
+import lsfzk.userservice.model.BusinessRegistration;
 import lsfzk.userservice.model.User;
+import lsfzk.userservice.repository.BusinessRegistrationRepository;
 import lsfzk.userservice.repository.UserRepository;
 import lsfzk.userservice.security.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -55,4 +58,10 @@ public class UserService {
 
         return new TokenResponseDTO(accessToken, refreshToken);
     }
+
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+    }
+
 }

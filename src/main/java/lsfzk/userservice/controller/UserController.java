@@ -10,6 +10,7 @@ import lsfzk.userservice.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,11 +36,17 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getCurrentUser(@PathVariable Long id, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
-        if (!user.getId().equals(id)) {
+    public ResponseEntity<?> getCurrentUser(@PathVariable Long id) {
+        User user = userService.getUserById(id);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자를 찾을 수 없습니다.");
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (!id.equals(Long.parseLong(authentication.getName()))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("접근 권한이 없습니다.");
         }
+
         return ResponseEntity.ok(Map.of(
                 "loginId", user.getLoginId(),
                 "name", user.getName(),
