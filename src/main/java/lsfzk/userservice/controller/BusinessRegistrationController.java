@@ -1,14 +1,23 @@
 package lsfzk.userservice.controller;
 
 import lombok.RequiredArgsConstructor;
-import lsfzk.userservice.dto.BusinessRegistrationDTO;
+import lsfzk.userservice.common.dto.Result;
+import lsfzk.userservice.dto.BusinessRegistrationResult;
 import lsfzk.userservice.dto.BusinessRegistrationRequestDTO;
+import lsfzk.userservice.event.BusinessRegistrationEvent;
 import lsfzk.userservice.model.User;
 import lsfzk.userservice.service.BusinessRegistrationService;
+import lsfzk.userservice.service.FileStorageService;
+import lsfzk.userservice.service.KafkaProducerService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.io.IOException;
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -17,23 +26,58 @@ import java.util.List;
 public class BusinessRegistrationController {
 
     private final BusinessRegistrationService businessRegistrationService;
+    private final FileStorageService fileStorageService;
+    private final KafkaProducerService kafkaProducerService;
 
-    @PostMapping
-    public ResponseEntity<BusinessRegistrationDTO> register(
-            @RequestBody BusinessRegistrationRequestDTO dto,
-            @AuthenticationPrincipal User user
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Result<?>> register(
+            @ModelAttribute BusinessRegistrationRequestDTO requestDto,
+            Principal principal
             ) {
-        Long userId = user.getId();
-        BusinessRegistrationDTO result = businessRegistrationService.register(userId, dto);
-        return ResponseEntity.ok(result);
+        if (!"application/pdf".equals(requestDto.getBusinessLicense().getContentType())) {
+            return ResponseEntity.badRequest().body(Result.error("Only PDF files are allowed."));
+        }
+
+        String fileName;
+        String fileUri;
+        try {
+            // Save the file and get its unique filename
+            fileName = fileStorageService.storeFile(requestDto.getBusinessLicense());
+
+            // Create the URL that can be used to download the file
+            fileUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/files/download/")
+                    .path(fileName)
+                    .toUriString();
+        } catch (IOException ex) {
+            return ResponseEntity.internalServerError().body(Result.error("Could not store file. Please try again!"));
+        }
+        Long userId = Long.parseLong(principal.getName());
+        BusinessRegistrationResult result = businessRegistrationService.register(userId, requestDto, fileName, fileUri);
+
+        // Send a message to Kafka topic for further processing
+        Long registrationId = result.getId();
+        String userNickname = requestDto.getUserNickname(); // You would get this from your user data
+
+        // 2. Create the event payload.
+        BusinessRegistrationEvent event = new BusinessRegistrationEvent(
+                userId,
+                registrationId,
+                userNickname,
+                requestDto.getBusinessName()
+        );
+
+        // 3. Send the event to Kafka.
+        kafkaProducerService.sendRegistrationEvent(event);
+        return ResponseEntity.ok(Result.success(result));
     }
 
     @GetMapping
-    public ResponseEntity<List<BusinessRegistrationDTO>> getMyRegistrations(
+    public ResponseEntity<List<BusinessRegistrationResult>> getMyRegistrations(
             @AuthenticationPrincipal User user
     ) {
         Long userId = user.getId();
-        List<BusinessRegistrationDTO> list = businessRegistrationService.getMyRegistrations(userId);
+        List<BusinessRegistrationResult> list = businessRegistrationService.getMyRegistrations(userId);
         return ResponseEntity.ok(list);
     }
 }

@@ -17,6 +17,9 @@ public class BusinessRegistration {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -30,14 +33,9 @@ public class BusinessRegistration {
     private String image;
     private String directory;
 
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private BusinessRegistrationStatus status = BusinessRegistrationStatus.PENDING;
-
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
 
     @Column(length = 1, nullable = false)
     private String isDeleted = "N";

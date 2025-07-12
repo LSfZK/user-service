@@ -8,14 +8,16 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class BusinessRegistrationDTO {
+public class BusinessRegistrationResult {
 
     private Long id;
     private String businessName;
     private String address;
     private BusinessRegistrationStatus status;
     private LocalDateTime createdAt;
+    private String fileName;
+    private String fileUri;
 
+    private String userId;
     private String userName;
-    private String userLoginId;
 }

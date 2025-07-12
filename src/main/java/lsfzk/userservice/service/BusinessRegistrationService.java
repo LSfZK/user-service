@@ -1,6 +1,6 @@
 package lsfzk.userservice.service;
 
-import lsfzk.userservice.dto.BusinessRegistrationDTO;
+import lsfzk.userservice.dto.BusinessRegistrationResult;
 import lsfzk.userservice.enums.BusinessRegistrationStatus;
 import lsfzk.userservice.model.BusinessRegistration;
 import lsfzk.userservice.dto.BusinessRegistrationRequestDTO;
@@ -25,7 +25,7 @@ public class BusinessRegistrationService {
     }
 
     @Transactional
-    public BusinessRegistrationDTO register(Long userId, BusinessRegistrationRequestDTO dto) {
+    public BusinessRegistrationResult register(Long userId, BusinessRegistrationRequestDTO dto, String fileName, String fileUri) {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -34,36 +34,54 @@ public class BusinessRegistrationService {
         registration.setBusinessName(dto.getBusinessName());
         registration.setAddress(dto.getAddress());
         registration.setStatus(BusinessRegistrationStatus.PENDING);
-        //registration.setImage(imageFileName);
-        //registration.setDirectory(uploadPath);
+        registration.setImage(fileName);
+        registration.setDirectory(fileUri);
 
-        BusinessRegistration saved = registrationRepo.save(registration);
-        return BusinessRegistrationDTO.builder()
-                .id(saved.getId())
-                .businessName(saved.getBusinessName())
-                .address(saved.getAddress())
-                .status(saved.getStatus())
-                .createdAt(saved.getCreatedAt())
-                .userName(saved.getUser().getName())
-                .userLoginId(saved.getUser().getLoginId())
+        BusinessRegistration result = registrationRepo.save(registration);
+        return BusinessRegistrationResult.builder()
+                .id(result.getId())
+                .businessName(result.getBusinessName())
+                .address(result.getAddress())
+                .status(result.getStatus())
+                .createdAt(result.getCreatedAt())
+                .userName(result.getUser().getName())
+                .userId(result.getUser().getLoginId())
+                .fileName(fileName) // Assuming fileName is the name of the uploaded business license file
+                .fileUri(fileUri) // Assuming fileUri is the URL to access the uploaded file
                 .build();
     }
 
     @Transactional(readOnly = true)
-    public List<BusinessRegistrationDTO> getMyRegistrations(Long userId) {
+    public List<BusinessRegistrationResult> getMyRegistrations(Long userId) {
         List<BusinessRegistration> registrations = registrationRepo.findByUserId(userId);
 
         return registrations.stream()
-                .map(reg -> BusinessRegistrationDTO.builder()
+                .map(reg -> BusinessRegistrationResult.builder()
                         .id(reg.getId())
                         .businessName(reg.getBusinessName())
                         .address(reg.getAddress())
                         .status(reg.getStatus())
                         .createdAt(reg.getCreatedAt())
                         .userName(reg.getUser().getName())
-                        .userLoginId(reg.getUser().getLoginId())
+                        .userId(reg.getUser().getLoginId())
                         .build())
                 .toList();
+    }
+
+    public BusinessRegistration getBusinessRegistrationById(Long id) {
+        return registrationRepo.findBusinessRegistrationById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사업자 등록입니다."));
+    }
+
+    @Transactional
+    public BusinessRegistration approveBusinessRegistration(Long registrationId) {
+        BusinessRegistration registration = getBusinessRegistrationById(registrationId);
+        if(!registration.getStatus().equals(BusinessRegistrationStatus.PENDING)) {
+            throw new IllegalArgumentException("이미 승인된 사업자 등록입니다.");
+        }
+        registration.setStatus(BusinessRegistrationStatus.APPROVED);
+        registration.setUpdatedAt(LocalDateTime.now());
+        return registration;
     }
 
     @Transactional
