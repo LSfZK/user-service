@@ -54,21 +54,6 @@ public class BusinessRegistrationController {
         }
         Long userId = Long.parseLong(principal.getName());
         BusinessRegistrationResult result = businessRegistrationService.register(userId, requestDto, fileName, fileUri);
-
-        // Send a message to Kafka topic for further processing
-        Long registrationId = result.getId();
-        String userNickname = requestDto.getUserNickname(); // You would get this from your user data
-
-        // 2. Create the event payload.
-        BusinessRegistrationEvent event = new BusinessRegistrationEvent(
-                userId,
-                registrationId,
-                userNickname,
-                requestDto.getBusinessName()
-        );
-
-        // 3. Send the event to Kafka.
-        kafkaProducerService.sendRegistrationEvent(event);
         return ResponseEntity.ok(Result.success(result));
     }
 

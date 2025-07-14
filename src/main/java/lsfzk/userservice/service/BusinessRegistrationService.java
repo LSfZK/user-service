@@ -1,7 +1,9 @@
 package lsfzk.userservice.service;
 
+import lombok.RequiredArgsConstructor;
 import lsfzk.userservice.dto.BusinessRegistrationResult;
 import lsfzk.userservice.enums.BusinessRegistrationStatus;
+import lsfzk.userservice.event.BusinessRegistrationEvent;
 import lsfzk.userservice.model.BusinessRegistration;
 import lsfzk.userservice.dto.BusinessRegistrationRequestDTO;
 import lsfzk.userservice.model.User;
@@ -14,15 +16,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class BusinessRegistrationService {
 
     private final BusinessRegistrationRepository registrationRepo;
     private final UserRepository userRepo;
-
-    public BusinessRegistrationService(BusinessRegistrationRepository registrationRepo, UserRepository userRepo) {
-        this.registrationRepo = registrationRepo;
-        this.userRepo = userRepo;
-    }
+    private final KafkaProducerService kafkaProducerService;
 
     @Transactional
     public BusinessRegistrationResult register(Long userId, BusinessRegistrationRequestDTO dto, String fileName, String fileUri) {
@@ -38,6 +37,15 @@ public class BusinessRegistrationService {
         registration.setDirectory(fileUri);
 
         BusinessRegistration result = registrationRepo.save(registration);
+
+        BusinessRegistrationEvent event = new BusinessRegistrationEvent(
+                userId,
+                result.getId(),
+                dto.getUserNickname(),
+                dto.getBusinessName()
+        );
+        kafkaProducerService.sendBusinessRegistrationEvent(event);
+
         return BusinessRegistrationResult.builder()
                 .id(result.getId())
                 .businessName(result.getBusinessName())

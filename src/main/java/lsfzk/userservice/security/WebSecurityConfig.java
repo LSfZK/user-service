@@ -47,7 +47,8 @@ public class WebSecurityConfig {
                                 "/users/register",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/internal/**" // Internal endpoints should not be exposed through the API Gateway
                         ).permitAll()
 
                         // All other requests must be authenticated
