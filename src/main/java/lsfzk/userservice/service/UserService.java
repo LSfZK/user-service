@@ -45,14 +45,14 @@ public class UserService {
     }
 
     public TokenResponseDTO login(LoginRequestDTO dto) {
-        User user = userRepository.findByLoginId(dto.getLoginId())
+        User user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole(), user.getLoginId());
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole(), user.getNickname());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId());
 
 

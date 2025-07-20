@@ -2,6 +2,8 @@ package lsfzk.userservice.controller;
 
 import lsfzk.userservice.model.Device;
 import lsfzk.userservice.repository.DeviceRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +16,7 @@ import java.util.stream.Collectors;
 public class DeviceController {
 
     private final DeviceRepository deviceRepository;
+    private static final Logger userLogger = LoggerFactory.getLogger("userLogger");
 
     public DeviceController(DeviceRepository deviceRepository) {
         this.deviceRepository = deviceRepository;
@@ -23,23 +26,30 @@ public class DeviceController {
      * Endpoint for the client app to register its device token.
      */
     @PostMapping("/users/me/devices")
-    public ResponseEntity<String> registerDevice(@RequestBody Map<String, String> payload, Principal principal) {
+    public ResponseEntity<?> registerDevice(@RequestBody Map<String, String> payload, Principal principal) {
+        userLogger.info("----------------------------------\n Registering device for user: {}\n----------------------------------", principal.getName());
         Long userId = Long.parseLong(principal.getName());
         String token = payload.get("deviceToken");
+        userLogger.info("Registering device for userId: {}, token: {}", userId, token);
 
         if (token == null || token.isEmpty()) {
             return ResponseEntity.badRequest().body("Device token is required.");
         }
+
+        userLogger.info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
         // Avoid duplicate tokens
         if (!deviceRepository.existsByUserIdAndDeviceToken(userId, token)) {
             Device device = new Device();
             device.setUserId(userId);
             device.setDeviceToken(token);
+            userLogger.info("Saving new device: {}", device);
             deviceRepository.save(device);
         }
 
-        return ResponseEntity.ok("Device registered successfully.");
+        userLogger.info("#########################");
+
+        return ResponseEntity.ok(Map.of("message", "Device registered successfully."));
     }
 
     /**

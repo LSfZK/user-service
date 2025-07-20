@@ -19,8 +19,10 @@ configurations {
     }
 }
 
+
 repositories {
     mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 ext {
@@ -52,6 +54,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.4.0'
+    implementation 'com.github.LSfZK:event-models:main-SNAPSHOT'
 }
 
 dependencyManagement {
