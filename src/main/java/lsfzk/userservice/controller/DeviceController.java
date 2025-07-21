@@ -27,7 +27,6 @@ public class DeviceController {
      */
     @PostMapping("/users/me/devices")
     public ResponseEntity<?> registerDevice(@RequestBody Map<String, String> payload, Principal principal) {
-        userLogger.info("----------------------------------\n Registering device for user: {}\n----------------------------------", principal.getName());
         Long userId = Long.parseLong(principal.getName());
         String token = payload.get("deviceToken");
         userLogger.info("Registering device for userId: {}, token: {}", userId, token);
@@ -35,8 +34,6 @@ public class DeviceController {
         if (token == null || token.isEmpty()) {
             return ResponseEntity.badRequest().body("Device token is required.");
         }
-
-        userLogger.info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
         // Avoid duplicate tokens
         if (!deviceRepository.existsByUserIdAndDeviceToken(userId, token)) {
@@ -46,8 +43,6 @@ public class DeviceController {
             userLogger.info("Saving new device: {}", device);
             deviceRepository.save(device);
         }
-
-        userLogger.info("#########################");
 
         return ResponseEntity.ok(Map.of("message", "Device registered successfully."));
     }
