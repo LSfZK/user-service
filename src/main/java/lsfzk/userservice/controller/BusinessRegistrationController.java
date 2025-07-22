@@ -1,10 +1,10 @@
 package lsfzk.userservice.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lsfzk.userservice.common.dto.Result;
-import lsfzk.userservice.dto.BusinessRegistrationResult;
 import lsfzk.userservice.dto.BusinessRegistrationRequestDTO;
-import lsfzk.userservice.event.BusinessRegistrationEvent;
+import lsfzk.userservice.dto.BusinessRegistrationResult;
 import lsfzk.userservice.model.User;
 import lsfzk.userservice.service.BusinessRegistrationService;
 import lsfzk.userservice.service.FileStorageService;
@@ -12,14 +12,13 @@ import lsfzk.userservice.service.KafkaProducerService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
-
+@Tag(name = "Business Registration", description = "사업자 신청 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users/business-registrations")

@@ -54,7 +54,7 @@ public class BusinessRegistrationService {
                 .status(result.getStatus())
                 .createdAt(result.getCreatedAt())
                 .userName(result.getUser().getName())
-                .userId(result.getUser().getLoginId())
+                .userId(result.getUser().getEmail())
                 .fileName(fileName) // Assuming fileName is the name of the uploaded business license file
                 .fileUri(fileUri) // Assuming fileUri is the URL to access the uploaded file
                 .build();
@@ -72,7 +72,7 @@ public class BusinessRegistrationService {
                         .status(reg.getStatus())
                         .createdAt(reg.getCreatedAt())
                         .userName(reg.getUser().getName())
-                        .userId(reg.getUser().getLoginId())
+                        .userId(reg.getUser().getEmail())
                         .build())
                 .toList();
     }
