@@ -7,7 +7,6 @@ import lombok.Setter;
 @Getter
 //회원가입시 사용할 dto
 public class SignupDTO {
-    private String loginId;
     private String password;
     private String name;
     private String nickname;

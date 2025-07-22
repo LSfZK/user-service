@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "users",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = "loginId"),
                 @UniqueConstraint(columnNames = "email"),
                 @UniqueConstraint(columnNames = "phone_number")}
 )
@@ -20,9 +19,6 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(length = 100, nullable = false)
-    private String loginId;
 
     @Column(nullable = false)
     private String password;

@@ -1,5 +1,7 @@
 package lsfzk.userservice.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lsfzk.userservice.dto.LoginRequestDTO;
 import lsfzk.userservice.dto.SignupDTO;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "UserService", description = "회원 관련 API")
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -24,18 +27,21 @@ public class UserController {
     private final JwtUtil jwtUtil;
 
     @PostMapping("/register")
+    @Operation(summary = "회원가입", description = "사용자 회원가입 api")
     public ResponseEntity<String> register(@RequestBody SignupDTO signupDTO){
         userService.register(signupDTO);
         return ResponseEntity.ok("회원가입 성공!");
     }
 
     @PostMapping("/login")
+    @Operation(summary = "로그인", description = "로그인 api")
     public ResponseEntity<TokenResponseDTO> login(@RequestBody LoginRequestDTO dto) {
         TokenResponseDTO token = userService.login(dto);
         return ResponseEntity.ok(token);
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "회원정보 조회", description = "본인의 회원정보 조회")
     public ResponseEntity<?> getCurrentUser(@PathVariable Long id) {
         User user = userService.getUserById(id);
         if (user == null) {
@@ -48,7 +54,6 @@ public class UserController {
         }
 
         return ResponseEntity.ok(Map.of(
-                "loginId", user.getLoginId(),
                 "name", user.getName(),
                 "email", user.getEmail(),
                 "nickname", user.getNickname(),
@@ -57,6 +62,7 @@ public class UserController {
     }
 
     @PostMapping("/refresh")
+    @Operation(summary = "accessToken refresh", description = "accessToken 갱신")
     public ResponseEntity<?> refresh(@RequestHeader("Authorization") String refreshToken) {
         if (refreshToken.startsWith("Bearer ")) {
             refreshToken = refreshToken.substring(7);
@@ -79,17 +85,36 @@ public class UserController {
     }
 
     @PostMapping("/logout")
+    @Operation(summary = "로그아웃", description = "현재 접속중인 사용자 로그아웃")
     public ResponseEntity<?> logout() {
 
-        return ResponseEntity.ok("로그아웃 되었습니다.");//fake redis 활용한 블랙리스트로 구현할것
+        return ResponseEntity.ok("로그아웃 되었습니다.");
     }
 
-    @GetMapping("/debug")
-    public ResponseEntity<?> debug(Authentication authentication) {
-        Object principal = authentication.getPrincipal();
-        return ResponseEntity.ok(Map.of(
-                "principal_class", principal.getClass().getName(),
-                "principal_value", principal.toString()
-        ));
+    @PatchMapping("/{id}")
+    @Operation(summary = "회원정보 수정", description = "회원정보 부분 및 전체 수정")
+    public ResponseEntity<?> updateUser(@PathVariable Long id,
+                                        @RequestBody Map<String, Object> updates) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        if (!id.equals(Long.parseLong(authentication.getName()))) {
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("접근 권한이 없습니다.");
+//        }
+
+        userService.updateUser(id, updates);
+        return ResponseEntity.ok("회원정보가 수정되었습니다.");
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "회원탈퇴", description = "회원탈퇴, 소프트 딜리트로 1년간 데이터 유지")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+//        if (!id.equals(Long.parseLong(authentication.getName()))) {
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("본인만 탈퇴할 수 있습니다.");
+//        }
+
+        userService.deleteUser(id);
+        return ResponseEntity.ok("회원정보가 삭제되었습니다.");
+    }
+
 }
