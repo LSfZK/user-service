@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "user_devices")
 @Getter
@@ -18,6 +20,9 @@ public class Device {
 
     @Column(nullable = false, unique = true)
     private String deviceToken;
+
+    @Column(name = "last_updated")
+    private LocalDateTime lastUpdated;
 
     // You can add more fields like platform (IOS/ANDROID), last login date, etc.
 }
