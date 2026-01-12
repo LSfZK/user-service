@@ -45,6 +45,7 @@ public class WebSecurityConfig {
                                 "/actuator/**",
                                 "/users/login",
                                 "/users/register",
+                                "/users/refresh",
                                 "/error",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",

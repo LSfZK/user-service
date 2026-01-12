@@ -3,6 +3,7 @@ package lsfzk.userservice.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lsfzk.userservice.enums.Role;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtUtil {
@@ -29,10 +32,14 @@ public class JwtUtil {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateAccessToken(Long userId, String roles, String nickname) {
+    public String generateAccessToken(Long userId, Set<Role> roles, String nickname) {
+        String rolesString = roles.stream()
+                .map(Enum::name) // or role.name()
+                .collect(Collectors.joining(","));
+
         return Jwts.builder()
                 .setSubject(Long.toString(userId))
-                .claim("roles", roles)
+                .claim("roles", rolesString)
                 .claim("nickname", nickname)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))

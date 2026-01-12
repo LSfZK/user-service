@@ -54,11 +54,11 @@ public class AdminController {
         return ResponseEntity.ok(dto);
     }
 
-    @PatchMapping("/{id}")
-    @Operation(summary = "관리자 권한 부여", description = "일반 사용자에게 관리자 권한 추가")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> promote(@PathVariable Long id){
-        userService.promote(id);
-        return ResponseEntity.ok("관리자 권한이 부여되었습니다.");
-    }
+//    @PatchMapping("/{id}")
+//    @Operation(summary = "관리자 권한 부여", description = "일반 사용자에게 관리자 권한 추가")
+//    @PreAuthorize("hasRole('ADMIN')")
+//    public ResponseEntity<?> promote(@PathVariable Long id){
+//        userService.promote(id);
+//        return ResponseEntity.ok("관리자 권한이 부여되었습니다.");
+//    }
 }

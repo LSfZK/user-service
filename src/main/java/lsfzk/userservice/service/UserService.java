@@ -1,21 +1,22 @@
 package lsfzk.userservice.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import lsfzk.userservice.dto.LoginRequestDTO;
-import lsfzk.userservice.dto.SignupDTO;
-import lsfzk.userservice.dto.TokenResponseDTO;
-import lsfzk.userservice.dto.UserInfoResponseDTO;
+import lsfzk.userservice.dto.*;
+import lsfzk.userservice.enums.Role;
 import lsfzk.userservice.model.User;
 import lsfzk.userservice.repository.UserRepository;
 import lsfzk.userservice.security.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -28,9 +29,9 @@ public class UserService {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
-        if (userRepository.findByPhoneNumber(signupDTO.getPhoneNumber()).isPresent()) {
-            throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
-        }
+//        if (userRepository.findByPhoneNumber(signupDTO.getPhoneNumber()).isPresent()) {
+//            throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
+//        }
 
         User user = new User();
         user.setEmail(signupDTO.getEmail());
@@ -54,7 +55,7 @@ public class UserService {
             throw new IllegalArgumentException("존재하지 않는 사용자입니다.");
         }
 
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getRole(), user.getNickname());
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getRoles(), user.getNickname());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId());
 
         return new TokenResponseDTO(accessToken, refreshToken);
@@ -66,22 +67,44 @@ public class UserService {
     }
 
     @Transactional
-    public void updateUser(Long id, Map<String, Object> updates) {
-        User user = this.userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+    public UserInfoResponseDTO updateUser(Long id, UserUpdateDto dto) {
+        // 1. Fetch the existing entity (Managed State)
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
-        if (updates.containsKey("name")) {
-            user.setName((String) updates.get("name"));
+        // 2. "Query Builder" Logic (Dynamic Update)
+        // We only update the field if the DTO value is NOT NULL
+        if (StringUtils.hasText(dto.getName())) {
+            user.setName(dto.getName());
         }
-        if (updates.containsKey("email")) {
-            user.setEmail((String) updates.get("email"));
+
+        if (StringUtils.hasText(dto.getPhoneNumber())) {
+            user.setPhoneNumber(dto.getPhoneNumber());
         }
-        if (updates.containsKey("nickname")) {
-            user.setNickname((String) updates.get("nickname"));
+
+        if (StringUtils.hasText(dto.getAddress())) {
+            user.setAddress(dto.getAddress());
         }
-        if (updates.containsKey("phoneNumber")) {
-            user.setPhoneNumber((String) updates.get("phoneNumber"));
-        }
+
+        // 3. NO userRepository.save(user) needed!
+        // Because of @Transactional, Hibernate compares the 'user' object
+        // at the start vs end of the method. It sees 'address' changed,
+        // so it automatically generates: "UPDATE users SET address = ? WHERE id = ?"
+
+        return new UserInfoResponseDTO(
+                user.getId(),
+                user.getName(),
+                user.getNickname(),
+                user.getEmail(),
+                user.getPhoneNumber(),
+                user.getAddress(),
+                user.getRoles(),
+                user.getGrade(),
+                user.getIsDeleted(),
+                user.getCreatedAt(),
+                user.getUpdatedAt(),
+                user.getDeletedAt()
+        );
     }
 
     @Transactional
@@ -102,7 +125,7 @@ public class UserService {
                 user.getEmail(),
                 user.getPhoneNumber(),
                 user.getAddress(),
-                user.getRole(),
+                user.getRoles(),
                 user.getGrade(),
                 user.getIsDeleted(),
                 user.getCreatedAt(),
@@ -112,10 +135,12 @@ public class UserService {
     }
 
     @Transactional
-    public void promote(Long id) {
+    public void updateUserRole(Long id, Role newRole) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("User not found."));
 
-        user.setRole("USER,ADMIN");
+        // 1. Add the new role (e.g., Add ADMIN to existing USER)
+        // Since it's a Set, duplicates are automatically handled.
+        user.addRole(newRole);
     }
 }

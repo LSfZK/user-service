@@ -1,6 +1,9 @@
 package lsfzk.userservice.dto;
 
+import lsfzk.userservice.enums.Role;
+
 import java.time.LocalDateTime;
+import java.util.Set;
 
 public record UserInfoResponseDTO(
         Long id,
@@ -9,7 +12,7 @@ public record UserInfoResponseDTO(
         String email,
         String phoneNumber,
         String address,
-        String role,
+        Set<Role> role,
         String grade,
         String isDeleted,
         LocalDateTime createdAt,

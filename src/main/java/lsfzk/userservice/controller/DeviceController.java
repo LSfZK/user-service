@@ -5,6 +5,7 @@ import lsfzk.userservice.repository.DeviceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -95,6 +96,7 @@ public class DeviceController {
      * Endpoint for delete FCM token upon logout
      **/
     @DeleteMapping("/users/me/devices")
+    @Transactional
     public ResponseEntity<?> deleteDevice(@RequestBody Map<String, String> payload, Principal principal) {
         deviceRepository.deleteByDeviceToken(payload.get("deviceToken"));
         return ResponseEntity.ok(Map.of("message", "Token deleted successfully."));
