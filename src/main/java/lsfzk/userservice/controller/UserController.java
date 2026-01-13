@@ -129,18 +129,17 @@ public class UserController {
         return ResponseEntity.ok("회원정보가 삭제되었습니다.");
     }
 
-    @PatchMapping("/{userId}/role")
+    @PostMapping("/me/promotion-requests")
     public ResponseEntity<Void> promoteUser(
-            @PathVariable Long userId,
             @RequestBody RoleUpdateDto dto,
+            @RequestHeader("X-User-Id") Long requesterId,
             @RequestHeader("X-User-Roles") String requesterRoles) {
 
-        // 1. Security: Only Admins can change roles
-        if (!requesterRoles.contains("ROLE_ADMIN")) {
-            throw new AccessDeniedException("Only Admins can promote users.");
+        if (!requesterRoles.contains("ROLE_OWNER")) {
+            throw new AccessDeniedException("Already owner.");
         }
 
-        userService.updateUserRole(userId, dto.getRole());
+        userService.requestPromote(requesterId, dto.getRole());
         return ResponseEntity.ok().build();
     }
 }

@@ -3,11 +3,13 @@ package lsfzk.userservice.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lsfzk.userservice.common.dto.Result;
+import lsfzk.userservice.dto.RoleUpdateDto;
 import lsfzk.userservice.dto.UserInfoResponseDTO;
 import lsfzk.userservice.model.BusinessRegistration;
 import lsfzk.userservice.service.BusinessRegistrationService;
 import lsfzk.userservice.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -61,4 +63,20 @@ public class AdminController {
 //        userService.promote(id);
 //        return ResponseEntity.ok("관리자 권한이 부여되었습니다.");
 //    }
+
+
+    @PatchMapping("/{userId}/promotion")
+    public ResponseEntity<Void> promoteUser(
+            @PathVariable Long userId,
+            @RequestBody RoleUpdateDto dto,
+            @RequestHeader("X-User-Roles") String requesterRoles) {
+
+        // 1. Security: Only Admins can change roles
+        if (!requesterRoles.contains("ROLE_ADMIN")) {
+            throw new AccessDeniedException("Only Admins can promote users.");
+        }
+
+        userService.updateUserRole(userId, dto.getRole());
+        return ResponseEntity.ok().build();
+    }
 }

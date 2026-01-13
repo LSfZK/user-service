@@ -4,7 +4,10 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lsfzk.userservice.dto.*;
 import lsfzk.userservice.enums.Role;
+import lsfzk.events.PromoteRequestEvent;
+import lsfzk.userservice.model.PromoteRequest;
 import lsfzk.userservice.model.User;
+import lsfzk.userservice.repository.PromoteRequestRepository;
 import lsfzk.userservice.repository.UserRepository;
 import lsfzk.userservice.security.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +24,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final KafkaProducerService kafkaProducerService;
+    private final PromoteRequestRepository promoteRequestRepository;
 
     //register
     public void register(SignupDTO signupDTO){
@@ -142,5 +147,20 @@ public class UserService {
         // 1. Add the new role (e.g., Add ADMIN to existing USER)
         // Since it's a Set, duplicates are automatically handled.
         user.addRole(newRole);
+    }
+
+    @Transactional
+    public void requestPromote(Long id, Role newRole) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found."));
+
+        PromoteRequest result = promoteRequestRepository.save(new PromoteRequest(id, newRole));
+
+        PromoteRequestEvent event = new PromoteRequestEvent(
+                id,
+                result.getId(),
+                newRole.name()
+        );
+        kafkaProducerService.sendPromoteRequestEvent(event);
     }
 }
