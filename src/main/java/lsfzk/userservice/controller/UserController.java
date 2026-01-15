@@ -130,16 +130,16 @@ public class UserController {
     }
 
     @PostMapping("/me/promotion-requests")
-    public ResponseEntity<Void> promoteUser(
+    public ResponseEntity<Result<Long>> promoteUser(
             @RequestBody RoleUpdateDto dto,
             @RequestHeader("X-User-Id") Long requesterId,
             @RequestHeader("X-User-Roles") String requesterRoles) {
 
-        if (!requesterRoles.contains("ROLE_OWNER")) {
+        if (requesterRoles.contains("ROLE_OWNER")) {
             throw new AccessDeniedException("Already owner.");
         }
 
         userService.requestPromote(requesterId, dto.getRole());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(Result.success(requesterId));
     }
 }

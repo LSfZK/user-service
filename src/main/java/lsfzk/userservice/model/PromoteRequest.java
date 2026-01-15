@@ -32,4 +32,19 @@ public class PromoteRequest extends BaseTimeEntity {
         this.userId = userId;
         this.role = role;
     }
+
+    // ✅ Meaningful Method
+    public void approve(Long adminId) {
+        if (this.approved) {
+            throw new IllegalStateException("Already approved.");
+        }
+        this.approved = true;
+        this.adminId = adminId;
+    }
+
+    // ✅ Meaningful Method
+    public void reject(Long adminId) {
+        this.approved = false;
+        this.adminId = adminId;
+    }
 }

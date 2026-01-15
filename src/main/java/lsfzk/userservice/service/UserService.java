@@ -10,12 +10,11 @@ import lsfzk.userservice.model.User;
 import lsfzk.userservice.repository.PromoteRequestRepository;
 import lsfzk.userservice.repository.UserRepository;
 import lsfzk.userservice.security.JwtUtil;
+import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -162,5 +161,22 @@ public class UserService {
                 newRole.name()
         );
         kafkaProducerService.sendPromoteRequestEvent(event);
+    }
+
+    @Transactional
+    public void approve(Long requestId, String status, Long adminId) {
+        PromoteRequest request = promoteRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Request Id: " + requestId));
+        if (status.equals("approve")) {
+            request.approve(adminId);
+            kafkaProducerService.sendPromoteRequestEvent(new PromoteRequestEvent(request.getUserId(),
+                    requestId,
+                    "Owner"));
+        } else {
+            request.reject(adminId);
+            kafkaProducerService.sendPromoteRequestEvent(new PromoteRequestEvent(request.getUserId(),
+                    requestId,
+                    "User"));
+        }
     }
 }
