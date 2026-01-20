@@ -139,6 +139,10 @@ public class UserController {
             throw new AccessDeniedException("Already owner.");
         }
 
+        if (requesterRoles.contains("ROLE_ADMIN")) {
+            throw new AccessDeniedException("Don't need to request.");
+        }
+
         userService.requestPromote(requesterId, dto.getRole());
         return ResponseEntity.ok(Result.success(requesterId));
     }

@@ -48,6 +48,7 @@ public class User {
     @Convert(converter = RoleSetConverter.class) // <--- Apply the magic here
     // ✅ Initialize with a Set containing ROLE_USER
     private Set<Role> roles = new HashSet<>(Collections.singletonList(Role.ROLE_USER));
+
     @Column(nullable = false)
     private String grade = "BASIC";
 

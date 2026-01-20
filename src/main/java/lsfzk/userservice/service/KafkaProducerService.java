@@ -1,8 +1,8 @@
 package lsfzk.userservice.service;
 
-//import lsfzk.userservice.event.BusinessRegistrationEvent;
 import lsfzk.events.BusinessRegistrationEvent;
 import lsfzk.events.PromoteRequestEvent;
+import lsfzk.events.PromoteResponseEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -43,6 +43,11 @@ public class KafkaProducerService {
     public void sendPromoteRequestEvent(PromoteRequestEvent event) {
         log.info("Producing PromoteRequestEvent: {}", event);
         this.kafkaTemplate.send("promote-request", String.valueOf(event.userId()), event);
+    }
+
+    public void sendPromoteResponseEvent(PromoteResponseEvent event) {
+        log.info("Producing PromoteRequestEvent: {}", event);
+        this.kafkaTemplate.send("promote-response", String.valueOf(event.userId()), event);
     }
 
     // You can add more methods here to send different event types.

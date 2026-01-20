@@ -2,6 +2,7 @@ package lsfzk.userservice.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lsfzk.events.PromoteResponseEvent;
 import lsfzk.userservice.dto.*;
 import lsfzk.userservice.enums.Role;
 import lsfzk.events.PromoteRequestEvent;
@@ -169,14 +170,20 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("Request Id: " + requestId));
         if (status.equals("approve")) {
             request.approve(adminId);
-            kafkaProducerService.sendPromoteRequestEvent(new PromoteRequestEvent(request.getUserId(),
+            User user = userRepository.findById(request.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            user.addRole(Role.ROLE_OWNER);
+            kafkaProducerService.sendPromoteResponseEvent(new PromoteResponseEvent(request.getUserId(),
                     requestId,
-                    "Owner"));
+                    adminId,
+                    true));
         } else {
             request.reject(adminId);
-            kafkaProducerService.sendPromoteRequestEvent(new PromoteRequestEvent(request.getUserId(),
+            kafkaProducerService.sendPromoteResponseEvent(new PromoteResponseEvent(request.getUserId(),
                     requestId,
-                    "User"));
+                    adminId,
+                    false));
         }
     }
 }
