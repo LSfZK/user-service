@@ -46,8 +46,14 @@ public class KafkaProducerService {
     }
 
     public void sendPromoteResponseEvent(PromoteResponseEvent event) {
-        log.info("Producing PromoteRequestEvent: {}", event);
+        log.info("Producing PromoteResponseEvent: {}", event);
         this.kafkaTemplate.send("promote-response", String.valueOf(event.userId()), event);
+    }
+
+    public void sendBusinessRegResultEvent(BusinessRegistrationEvent event) {
+        log.info("Producing BusinessRegResultEvent: {}", event);
+        // Spring's JsonSerializer handles the conversion from the object to JSON.
+        this.kafkaTemplate.send("business-reg-result", String.valueOf(event.registrationId()), event);
     }
 
     // You can add more methods here to send different event types.

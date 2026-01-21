@@ -82,30 +82,49 @@ public class BusinessRegistrationService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사업자 등록입니다."));
     }
 
+    public List<BusinessRegistrationResult> getWaitingRegistrations() {
+        List<BusinessRegistration> registrations = registrationRepo.findByStatusWithUser(BusinessRegistrationStatus.PENDING);
+
+        return registrations.stream()
+                .map(reg -> BusinessRegistrationResult.builder()
+                        .id(reg.getId())
+                        .businessName(reg.getBusinessName())
+                        .address(reg.getAddress())
+                        .status(reg.getStatus())
+                        .createdAt(reg.getCreatedAt())
+                        .userName(reg.getUser().getName())
+                        .userId(reg.getUser().getEmail())
+                        .build())
+                .toList();
+    }
+
     @Transactional
-    public BusinessRegistration approveBusinessRegistration(Long registrationId) {
+    public BusinessRegistration approveBusinessRegistration(Long registrationId, boolean approved) {
         BusinessRegistration registration = getBusinessRegistrationById(registrationId);
         if(!registration.getStatus().equals(BusinessRegistrationStatus.PENDING)) {
             throw new IllegalArgumentException("이미 승인된 사업자 등록입니다.");
         }
-        registration.setStatus(BusinessRegistrationStatus.APPROVED);
-        registration.setUpdatedAt(LocalDateTime.now());
+        if(approved) {
+            registration.setStatus(BusinessRegistrationStatus.APPROVED);
+            registration.setUpdatedAt(LocalDateTime.now());
+            BusinessRegistrationEvent event = new BusinessRegistrationEvent(
+                    registration.getUser().getId(),
+                    registration.getId(),
+                    registration.getUser().getName(),
+                    registration.getBusinessName()
+            );
+            kafkaProducerService.sendBusinessRegResultEvent(event);
+        } else {
+            registration.setStatus(BusinessRegistrationStatus.REJECTED);
+            registration.setUpdatedAt(LocalDateTime.now());
+            BusinessRegistrationEvent event = new BusinessRegistrationEvent(
+                    registration.getUser().getId(),
+                    registration.getId(),
+                    registration.getUser().getName(),
+                    registration.getBusinessName()
+            );
+            kafkaProducerService.sendBusinessRegResultEvent(event);
+        }
         return registration;
-    }
-
-    @Transactional
-    public void approve(Long registrationId) {
-        BusinessRegistration reg = registrationRepo.findById(registrationId)
-                .orElseThrow(() -> new IllegalArgumentException("Registration not found"));
-        reg.setStatus(BusinessRegistrationStatus.APPROVED);
-        reg.setUpdatedAt(LocalDateTime.now());
-    }
-
-    @Transactional
-    public void reject(Long registrationId) {
-        BusinessRegistration reg = registrationRepo.findById(registrationId)
-                .orElseThrow(() -> new IllegalArgumentException("Registration not found"));
-        reg.setStatus(BusinessRegistrationStatus.REJECTED);
-        reg.setUpdatedAt(LocalDateTime.now());
     }
 }

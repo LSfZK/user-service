@@ -3,6 +3,7 @@ package lsfzk.userservice.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lsfzk.userservice.common.dto.Result;
+import lsfzk.userservice.dto.BusinessRegistrationResult;
 import lsfzk.userservice.dto.WaitingPromoteRequestDto;
 import lsfzk.userservice.dto.RoleUpdateDto;
 import lsfzk.userservice.dto.UserInfoResponseDTO;
@@ -14,6 +15,7 @@ import lsfzk.userservice.service.UserService;
 import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,7 +34,7 @@ public class AdminController {
 
     @GetMapping("/business-registrations/approve/{id}")
     public ResponseEntity<Result<?>> checkBusinessRegistration(@PathVariable Long id, Authentication authentication) {
-        if(authentication.getAuthorities().stream().noneMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"))) {
+        if(authentication.getAuthorities().stream().noneMatch(auth -> auth.getAuthority().equals("ROLE_ROLE_ADMIN"))) {
             return ResponseEntity.status(403).body(Result.error("Access denied. Only admins can approve registrations."));
         }
         // Logic to approve business registration
@@ -42,8 +44,21 @@ public class AdminController {
         return ResponseEntity.ok(Result.success(businessRegistration));
     }
 
-    @PostMapping("/business-registrations/approve")
-    public ResponseEntity<Result<?>> approveBusinessRegistration(Long registrationId, Authentication authentication) {
+//    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/waiting-business-registrations")
+    public ResponseEntity<Result<?>> getWaitingBusinessRegistrations(Authentication authentication) {
+        if(authentication.getAuthorities().stream().noneMatch(auth -> auth.getAuthority().equals("ROLE_ROLE_ADMIN"))) {
+            return ResponseEntity.status(403).body(Result.error("Access denied. Only admins can approve registrations."));
+        }
+        // Logic to approve business registration
+        // This method should call the userService to perform the approval
+        // and return an appropriate response.
+        List<BusinessRegistrationResult> businessRegistration = businessRegistrationService.getWaitingRegistrations();
+        return ResponseEntity.ok(Result.success(businessRegistration));
+    }
+
+    @PatchMapping("/business-registrations/approve/{registrationId}/{status}")
+    public ResponseEntity<Result<?>> approveBusinessRegistration(@PathVariable Long registrationId, Authentication authentication, @PathVariable String status) {
         // Logic to approve business registration
         // This method should call the userService to perform the approval
         // and return an appropriate response.
@@ -53,7 +68,8 @@ public class AdminController {
         if(authentication.getAuthorities().stream().noneMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"))) {
             return ResponseEntity.status(403).body(Result.error("Access denied. Only admins can approve registrations."));
         }
-        BusinessRegistration businessRegistration = businessRegistrationService.approveBusinessRegistration(registrationId);
+        boolean approved = status.equals("approved");
+        BusinessRegistration businessRegistration = businessRegistrationService.approveBusinessRegistration(registrationId, approved);
         return ResponseEntity.ok(Result.success("Business registration approved successfully."));
     }
 
